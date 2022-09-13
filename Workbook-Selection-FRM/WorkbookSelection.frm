@@ -13,16 +13,18 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 ' Workbook Selection
 ''' Purpose:
 ''' When user form activated, all combo boxes are filled with instances of each open (editable) workbook.
+''' When executed, passes form values to ProcessForm sub.
 
 Private Sub Execute_Click()
 '
     If cb1.Value = "" Or cb2.Value = "" Or cb3.Value = "" Then
         MsgBox ("At least one combo box is empty. Will not run.")
     End If
-    BulkExport cb1.Value, cb2.Value, cb3.Value, closewb, check2
+    ProcessForm cb1.Value, cb2.Value, cb3.Value, closewb, check2
     If check2 = True Then MsgBox ("Do something with check2")
 End Sub
 Private Sub UserForm_Activate()
@@ -71,46 +73,42 @@ Cells(Cells.CurrentRegion.Rows.Count, Cells.CurrentRegion.Columns.Count).Select
 Set c = Selection
 Range("A1", c).Select
 End Sub
-Sub BulkExport(cb1 As String, cb2 As String, cb3 As String, closewb As Boolean, check2 As Boolean)
+Sub CopyFromWB(wb As Workbook, ws As Worksheet, Optional dwb As Workbook)
+' Uses the data passed from ProcessForm sub to copy data from one workbook to "ThisWorkbook"
+    If IsNull(dwb) Then Set dwb = ThisWorkbook
+    
+    wb.Activate
+    SelectRange
+    Selection.Copy
+    ThisWorkbook.Activate
+    ws.Select
+    Range("A1").Select
+    ActiveSheet.Paste
+    wb.Application.CutCopyMode = False
+End Sub
+Sub ProcessForm(cb1 As String, cb2 As String, cb3 As String, closewb As Boolean, check2 As Boolean)
 Application.ScreenUpdating = False
 Application.EnableEvents = False
 purgesheets
-Dim wb As Workbook
+Dim wb As Workbook, ws As Worksheet
     If cb1 <> "skip" Then
         Set wb = Workbooks(cb1)
-        wb.Activate
-        SelectRange
-        Selection.Copy
-        ThisWorkbook.Activate
-        Sheets("MB51-1").Select ' Change this to your sheets import location
-        Range("A1").Select
-        ActiveSheet.Paste
-        wb.Application.CutCopyMode = False
+        Set ws = Sheets("Sheet1") ' Change this to your sheets import location
+        CopyFromWB wb, ws
         If closewb = True Then wb.Close
         Me.cb1.Value = "Complete"
     End If
     If cb2 <> "skip" Then
         Set wb = Workbooks(cb2)
-        wb.Activate
-        SelectRange
-        Selection.Copy
-        ThisWorkbook.Activate
-        Sheets("MB51-2").Select ' Change this to your sheets import location
-        Range("A1").Select
-        ActiveSheet.Paste
-        wb.Application.CutCopyMode = False
+        Set ws = Sheets("Sheet2") ' Change this to your sheets import location
+        CopyFromWB wb, ws
         If closewb = True Then wb.Close
         Me.cb2.Value = "Complete"
     End If
     If cb3 <> "skip" Then
         Set wb = Workbooks(cb3)
-        wb.Activate
-        SelectRange
-        Selection.Copy
-        ThisWorkbook.Activate
-        Sheets("Err").Select ' Change this to your sheets import location
-        Range("A1").Select
-        ActiveSheet.Paste
+        Set ws = Sheets("Sheet3") ' Change this to your sheets import location
+        CopyFromWB wb, ws
         wb.Application.CutCopyMode = False
         If closewb = True Then wb.Close
         Me.cb3.Value = "Complete"
