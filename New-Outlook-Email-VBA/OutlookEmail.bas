@@ -30,7 +30,7 @@ TempDirectory = Environ("temp") & "\"
     Recipients = "" ' Seperate each email address with ;
     CarbonCopy = "" ' Seperate each email address with ;
     Subject = "Email Subject"
-    ExportDirectory = Environ("Userprofile") & "\Downloads\Repair and Returns\"
+    ExportDirectory = Environ("Userprofile") & "\" & "Downloads\Repair and Returns\"
     
     bKillDirectory = False ' Delete files from export directory on run
         If bKillDirectory = True Then KillFiles ExportDirectory
