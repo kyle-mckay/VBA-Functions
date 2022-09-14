@@ -13,7 +13,7 @@ Sub AddComponent()
         .AddFromFile (ARR)
     End With
 End Sub
-Sub GenerateEmail(Optional automation As String)
+Sub GenerateEmail(Optional automation As String, Optional bSendNow As Boolean)
 'ScStop
 Dim ws As Excel.Worksheet
 Dim SaveToDirectory As String, ChartName As String, TempDirectory As String, SheetDirectory As String, ExportDirectory As String, CopyName As String, plant As String, Recipients As String, CarbonCopy As String, Subject As String
@@ -21,7 +21,7 @@ Dim hsheet As Worksheet
 Dim objChrt As ChartObject
 Dim myChart As Chart
 Dim ChartNameNumber As Integer
-Dim bExportCharts As Boolean, bSendNow As Boolean, bExportRange As Boolean, bKillDirectory As Boolean
+Dim bExportCharts As Boolean, bExportRange As Boolean, bKillDirectory As Boolean
 Dim FileList As ArrayList
 TempDirectory = Environ("temp") & "\"
 ''''' User Defined Settings
@@ -80,7 +80,7 @@ ExportRange:
                 For i = 1 To 1 ' The 1 on the right being the number of ranges you wish to import to email
                     If i = 1 Then Set rg = Sheets("Sheet1").Range("A1:B6")
                     rg.Worksheet.Select
-                    rgp = ExportRange(rg, i, ExportDirectory & "Range\")
+                    rgp = ExportRange(rg, i, ExportDirectory & "Range\", True)
                     myMail.Attachments.Add rgp
                 Next
             ''''
@@ -116,31 +116,43 @@ Sub zoomIn(Optional Charts As Worksheet)
     Charts.Activate
     ActiveWindow.Zoom = 250
 End Sub
-Public Function ExportRange(rg As Range, c As Integer, Optional ExportDirectory) As String
-    
- Dim ws As Worksheet
- Dim chartO As ChartObject
- Dim lWidth As Long, lHeight As Long
- If ExportDirectory = "" Then ExportDirectory = Environ("Userprofile") & "\Downloads\Ranges\"
- KillFiles (ExportDirectory)
- Set ws = ActiveSheet
- Set rg = rg
+Public Function ExportRange(rg As Range, c As Integer, Optional ExportDirectory, Optional btotext As Boolean) As String
+     
+Dim ws As Worksheet, ns As Worksheet
+Dim chartO As ChartObject
+Dim lWidth As Long, lHeight As Long
+If ExportDirectory = "" Then ExportDirectory = Environ("Userprofile") & "\Downloads\Ranges\"
+KillFiles (ExportDirectory)
+Set ws = ActiveSheet
 
- rg.CopyPicture xlScreen, xlPicture
- lWidth = rg.Width
- lHeight = rg.Height
+If btotext = True Then
+    RangeToText rg
+    Set rg = Selection
+    Set ns = ActiveSheet
+End If
+rg.CopyPicture xlScreen, xlPicture
+lWidth = rg.Width
+lHeight = rg.Height
 
- Set chartO = ws.ChartObjects.Add(Left:=0, Top:=0, Width:=lWidth, Height:=lHeight)
+If btotext = True Then
+    Set chartO = ns.ChartObjects.Add(Left:=0, Top:=0, Width:=lWidth, Height:=lHeight)
+Else
+    Set chartO = ws.ChartObjects.Add(Left:=0, Top:=0, Width:=lWidth, Height:=lHeight)
+End If
 
- chartO.Activate
- With chartO.Chart
-  .Paste
-  .Export Filename:=ExportDirectory & "Case" & c & ".png", Filtername:="PNG"
- End With
+chartO.Activate
+With chartO.Chart
+ .Paste
+ .export Filename:=ExportDirectory & "Case" & c & ".png", Filtername:="PNG"
+End With
 
- chartO.Delete
-
-    ExportRange = ExportDirectory & "Case" & c & ".png"
+chartO.Delete
+If btotext = True Then
+    Application.DisplayAlerts = False
+    ns.Delete
+    Application.DisplayAlerts = True
+End If
+   ExportRange = ExportDirectory & "Case" & c & ".png"
 End Function
 Sub createJpg(SheetName As String, xRgPic As Range, i As Integer)
     'Dim xRgPic As Range
@@ -151,9 +163,9 @@ Sub createJpg(SheetName As String, xRgPic As Range, i As Integer)
     With ThisWorkbook.Worksheets(SheetName).ChartObjects.Add(xRgPic.Left, xRgPic.Top, xRgPic.Width, xRgPic.Height)
         .Activate
         .Chart.Paste
-        .Chart.Export Environ$("temp") & "\" & i & ".png", "PNG"
+        .Chart.export Environ$("temp") & "\" & i & ".png", "PNG"
     End With
-    Worksheets(SheetName).ChartObjects(Worksheets(SheetName).ChartObjects.Count).Delete
+    Worksheets(SheetName).ChartObjects(Worksheets(SheetName).ChartObjects.count).Delete
 Set xRgPic = Nothing
 End Sub
 Sub ExportCharts(Optional ExportDirectory As String)
@@ -176,7 +188,7 @@ KillFiles ExportDirectory
             On Error Resume Next
             MkDir ExportDirectory
             Kill myFileName ' Delete file if already exists
-            myChart.Export Filename:=myFileName, Filtername:="PNG"
+            myChart.export Filename:=myFileName, Filtername:="PNG"
             On Error GoTo 0
 
         Next
@@ -209,3 +221,16 @@ Sub KillFiles(path As String)
     MkDir path ' Make path after remove
     On Error GoTo 0
 End Sub
+Sub RangeToText(rg As Range)
+Dim ns As Worksheet
+    Sheets.Add After:=rg.Worksheet
+    Set ns = ActiveSheet
+    rg.Copy
+    ns.Select
+    Range("A1").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+            :=False, Transpose:=False
+        Columns("A:A").NumberFormat = "m/d/yyyy"
+    Columns.AutoFit
+End Sub
+
