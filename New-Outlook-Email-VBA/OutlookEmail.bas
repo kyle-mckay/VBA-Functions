@@ -13,6 +13,9 @@ Sub AddComponent()
         .AddFromFile (ARR)
     End With
 End Sub
+Sub asdasad()
+GenerateEmail
+End Sub
 Sub GenerateEmail(Optional automation As String, Optional bSendNow As Boolean)
 'ScStop
 Dim ws As Excel.Worksheet
@@ -143,7 +146,7 @@ End If
 chartO.Activate
 With chartO.Chart
  .Paste
- .export Filename:=ExportDirectory & "Case" & c & ".png", Filtername:="PNG"
+ .Export Filename:=ExportDirectory & "Case" & c & ".png", Filtername:="PNG"
 End With
 
 chartO.Delete
@@ -163,7 +166,7 @@ Sub createJpg(SheetName As String, xRgPic As Range, i As Integer)
     With ThisWorkbook.Worksheets(SheetName).ChartObjects.Add(xRgPic.Left, xRgPic.Top, xRgPic.Width, xRgPic.Height)
         .Activate
         .Chart.Paste
-        .Chart.export Environ$("temp") & "\" & i & ".png", "PNG"
+        .Chart.Export Environ$("temp") & "\" & i & ".png", "PNG"
     End With
     Worksheets(SheetName).ChartObjects(Worksheets(SheetName).ChartObjects.count).Delete
 Set xRgPic = Nothing
@@ -188,7 +191,7 @@ KillFiles ExportDirectory
             On Error Resume Next
             MkDir ExportDirectory
             Kill myFileName ' Delete file if already exists
-            myChart.export Filename:=myFileName, Filtername:="PNG"
+            myChart.Export Filename:=myFileName, Filtername:="PNG"
             On Error GoTo 0
 
         Next
@@ -230,7 +233,6 @@ Dim ns As Worksheet
     Range("A1").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
             :=False, Transpose:=False
-        Columns("A:A").NumberFormat = "m/d/yyyy"
     Columns.AutoFit
 End Sub
 
